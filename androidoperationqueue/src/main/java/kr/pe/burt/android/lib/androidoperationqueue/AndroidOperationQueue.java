@@ -150,7 +150,7 @@ public class AndroidOperationQueue {
      * Remove any pending Operations that are in OperationQueue
      * @param operation
      */
-    public void removeOperations(Operation operation) {
+    public void removeOperation(Operation operation) {
         if(isRunning) {
             if(operationHandlerThreadHandler == null)
                 return ;
