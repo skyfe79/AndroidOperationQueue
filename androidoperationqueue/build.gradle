@@ -1,4 +1,23 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.novoda.bintray-release'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.novoda:bintray-release:0.3.4'
+    }
+}
+
+publish {
+    userOrg = 'skyfe79'
+    groupId = 'kr.pe.burt.android.lib'
+    artifactId = 'androidoperationqueue'
+    publishVersion = '0.0.1'
+    desc = 'AndroidOperationQueue is tiny serial operation queue for Android Development.'
+    website = 'https://github.com/skyfe79/AndroidOperationQueue'
+}
 
 android {
     compileSdkVersion 23
