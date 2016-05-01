@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
@@ -38,12 +39,36 @@ public class MainActivity extends AppCompatActivity {
 
     @OnClick(R.id.downloadButton)
     void onDownloadButtonClicked() {
+        queue.stop();
+        queue.addOperation(new Operation() {
+            @Override
+            public void run() {
+                AndroidOperation.runOnUiThread(new Operation() {
+                    @Override
+                    public void run() {
+                        progressBar.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+        });
+
+        queue.addOperation(new Operation() {
+            @Override
+            public void run() {
+                Bundle bundle = queue.getBundle();
+                bundle.putString("url", "https://www.google.co.kr/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png");
+            }
+        });
 
         queue.addOperation(new Operation() {
             @Override
             public void run() {
 
-                final Bitmap bitmap = downloadBitmap("https://www.google.co.kr/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png");
+                Bundle bundle = queue.getBundle();
+                String url = bundle.getString("url", null);
+                if(url == null) return ;
+
+                final Bitmap bitmap = downloadBitmap(url);
 
                 if(bitmap != null) {
                     AndroidOperation.runOnUiThread(new Operation() {
@@ -55,7 +80,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
+        queue.addOperation(new Operation() {
+            @Override
+            public void run() {
+                AndroidOperation.sleep(1000);
+                AndroidOperation.runOnUiThread(new Operation() {
+                    @Override
+                    public void run() {
+                        progressBar.setVisibility(View.GONE);
+                    }
+                });
+            }
+        });
         queue.start();
     }
 
@@ -76,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
 
             InputStream inputStream = urlConnection.getInputStream();
             if (inputStream != null) {
-
                 Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
                 return bitmap;
             }
