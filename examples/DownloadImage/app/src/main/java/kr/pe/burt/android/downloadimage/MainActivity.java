@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     @OnClick(R.id.downloadButton)
     void onDownloadButtonClicked() {
-        queue.stop();
+
         queue.addOperation(new Operation() {
             @Override
             public void run() {

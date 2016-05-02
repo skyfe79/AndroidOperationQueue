@@ -58,6 +58,10 @@ public class AndroidOperationQueue {
         operationQueue.clear();
     }
 
+    public boolean isActivated() {
+        return isRunning;
+    }
+
     /**
      * Stop Android Operation Queue and remove all operations
      */
