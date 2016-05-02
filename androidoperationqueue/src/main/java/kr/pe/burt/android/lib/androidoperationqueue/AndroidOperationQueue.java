@@ -43,6 +43,9 @@ public class AndroidOperationQueue {
      * Start Android Operation Queue
      */
     public synchronized void start() {
+
+        if(isRunning == true) return;
+
         isRunning = true;
         if(operationHandlerThread == null) {
             operationHandlerThread = new HandlerThread(name, priority);
@@ -55,10 +58,17 @@ public class AndroidOperationQueue {
         operationQueue.clear();
     }
 
+    public boolean isActivated() {
+        return isRunning;
+    }
+
     /**
      * Stop Android Operation Queue and remove all operations
      */
     public synchronized void stop() {
+
+        if(isRunning == false) return;
+
         isRunning = false;
         removeAllOperations();
         operationHandlerThread.quit();
