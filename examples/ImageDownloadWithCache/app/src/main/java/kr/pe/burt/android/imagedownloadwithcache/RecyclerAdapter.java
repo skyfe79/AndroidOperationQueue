@@ -39,8 +39,8 @@ import kr.pe.burt.android.lib.androidoperationqueue.Operation;
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
 
     List<CardItem> items;
+    AndroidOperationQueue downloadQueue = new AndroidOperationQueue("DownloadQueue");
 
-    private static final Handler handler = new Handler(Looper.getMainLooper());
 
     public RecyclerAdapter(List<CardItem> items) {
         this.items = items;
@@ -59,7 +59,8 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         /**
          * It's not a good idea to use multiple operation in cell binding scope.
          */
-        AndroidOperationQueue downloadQueue = new AndroidOperationQueue("DownloadQueue");
+
+        downloadQueue.stop();
 
         downloadQueue.addOperation(new Operation() {
             @Override
@@ -100,7 +101,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
                     if(bitmap != null) {
                         Cache.sharedInstance().putBitmapInMemoryCache(url, bitmap);
-                        handler.postAtFrontOfQueue(new Runnable() {
+                        AndroidOperation.runOnUiThread(new Operation() {
                             @Override
                             public void run() {
                                 holder.image.setImageBitmap(bitmap);
@@ -117,7 +118,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                 final Bitmap bitmap = downloadBitmapFromURL(url);
                 if(bitmap != null) {
                     Cache.sharedInstance().putBitmapInMemoryCache(url, bitmap);
-                    handler.postAtFrontOfQueue(new Runnable() {
+                    AndroidOperation.runOnUiThread(new Operation() {
                         @Override
                         public void run() {
                             holder.image.setImageBitmap(bitmap);
@@ -176,6 +177,10 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                 Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
                 return bitmap;
             }
+
+            inputStream.close();
+            inputStream = null;
+
         } catch (Exception e) {
             Log.d("downloadBitmap", e.toString());
             if (urlConnection != null) {
@@ -185,7 +190,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
-
             }
         }
         return null;
@@ -196,6 +200,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
             FileOutputStream out = new FileOutputStream(path);
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
             out.close();
+            out = null;
         } catch (FileNotFoundException e) {
             return false;
         } catch (IOException e) {

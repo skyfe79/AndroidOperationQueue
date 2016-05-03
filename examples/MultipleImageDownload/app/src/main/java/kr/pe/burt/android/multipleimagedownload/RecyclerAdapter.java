@@ -34,7 +34,7 @@ import kr.pe.burt.android.multipleimagedownload.R;
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHolder> {
 
     List<CardItem> items;
-
+    AndroidOperationQueue downloadQueue = new AndroidOperationQueue("DownloadQueue");
 
     public RecyclerAdapter(List<CardItem> items) {
         this.items = items;
@@ -49,9 +49,8 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         final  CardItem item = items.get(position);
-
-        AndroidOperationQueue downloadQueue = new AndroidOperationQueue("DownloadQueue");
-
+        
+        downloadQueue.stop();
 
         downloadQueue.addOperation(new Operation() {
             @Override
@@ -128,6 +127,10 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                 Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
                 return bitmap;
             }
+
+            inputStream.close();
+            inputStream = null;
+
         } catch (Exception e) {
             Log.d("downloadBitmap", e.toString());
             if (urlConnection != null) {
