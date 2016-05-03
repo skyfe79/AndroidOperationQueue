@@ -1,22 +1,56 @@
-package kr.pe.burt.android.multipleimagedownload;
+package kr.pe.burt.android.imagedownloadwithcache;
 
+import android.Manifest;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
+
+import com.github.kayvannj.permission_utils.Func;
+import com.github.kayvannj.permission_utils.PermissionUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class MainActivity extends AppCompatActivity {
 
-
+    private static final int REQUEST_CODE_STORAGE = 1;
+    private PermissionUtil.PermissionRequestObject storagePermissionRequest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        storagePermissionRequest = PermissionUtil.with(this)
+                .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .onAllGranted(new Func() {
+                    @Override
+                    protected void call() {
+                        run();
+                    }
+                })
+                .onAnyDenied(new Func() {
+                    @Override
+                    protected void call() {
+
+                    }
+                })
+                .ask(REQUEST_CODE_STORAGE);
+
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(storagePermissionRequest!=null) storagePermissionRequest.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    private void run() {
         RecyclerView recyclerView = (RecyclerView)findViewById(R.id.recyclerView);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getApplicationContext(), LinearLayoutManager.VERTICAL, false);
         layoutManager.setSmoothScrollbarEnabled(true);
@@ -27,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
             items.add(new CardItem(url));
         }
         recyclerView.setAdapter(new RecyclerAdapter(items));
-
     }
 
 
