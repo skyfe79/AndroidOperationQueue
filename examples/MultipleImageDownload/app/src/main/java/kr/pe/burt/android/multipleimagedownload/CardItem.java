@@ -5,19 +5,14 @@ package kr.pe.burt.android.multipleimagedownload;
  */
 public class CardItem {
     String imageURL;
-    String title;
 
 
-    public CardItem(String imageURL, String title) {
+    public CardItem(String imageURL) {
         this.imageURL = imageURL;
-        this.title = title;
     }
 
     public String getImageURL() {
         return imageURL;
     }
 
-    public String getTitle() {
-        return title;
-    }
 }
