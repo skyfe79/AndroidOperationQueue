@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -54,8 +55,8 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
         downloadQueue.addOperation(new Operation() {
             @Override
-            public void run() {
-                AndroidOperation.runOnUiThread(new Operation() {
+            public void run(AndroidOperationQueue queue, Bundle bundle) {
+                AndroidOperation.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         holder.image.setImageBitmap(null);
@@ -68,13 +69,13 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
         downloadQueue.addOperation(new Operation() {
             @Override
-            public void run() {
+            public void run(AndroidOperationQueue queue, Bundle bundle) {
                 String url = item.getImageURL();
 
                 final Bitmap bitmap = downloadBitmap(url);
 
                 if(bitmap != null) {
-                    AndroidOperation.runOnUiThread(new Operation() {
+                    AndroidOperation.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             holder.image.setImageBitmap(bitmap);

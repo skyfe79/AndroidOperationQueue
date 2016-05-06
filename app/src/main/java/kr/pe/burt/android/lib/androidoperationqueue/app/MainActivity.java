@@ -27,8 +27,9 @@ public class MainActivity extends AppCompatActivity {
             final int count = i;
             queue.addOperation(new Operation() {
                 @Override
-                public void run() {
-                    AndroidOperation.runOnUiThread(new Operation() {
+                public void run(final AndroidOperationQueue queue, final Bundle bundle) {
+
+                    AndroidOperation.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             textView.setText(String.valueOf(count));
@@ -43,31 +44,28 @@ public class MainActivity extends AppCompatActivity {
 
         queue.addOperation(new Operation() {
             @Override
-            public void run() {
-                Bundle bundle = queue.getBundle();
+            public void run(AndroidOperationQueue q, Bundle bundle) {
                 bundle.putInt("sum", 1);
             }
         });
+
         queue.addOperation(new Operation() {
             @Override
-            public void run() {
-                Bundle bundle = queue.getBundle();
+            public void run(AndroidOperationQueue q, Bundle bundle) {
                 int sum = bundle.getInt("sum");
                 bundle.putInt("sum", sum + 2);
             }
         });
         queue.addOperation(new Operation() {
             @Override
-            public void run() {
-                Bundle bundle = queue.getBundle();
+            public void run(AndroidOperationQueue q, Bundle bundle) {
                 int sum = bundle.getInt("sum");
                 bundle.putInt("sum", sum + 3);
             }
         });
         queue.addOperation(new Operation() {
             @Override
-            public void run() {
-                Bundle bundle = queue.getBundle();
+            public void run(AndroidOperationQueue q, Bundle bundle) {
                 int sum = bundle.getInt("sum");
                 Log.v("SUM", String.format("1+2+3 = %d", sum));
             }

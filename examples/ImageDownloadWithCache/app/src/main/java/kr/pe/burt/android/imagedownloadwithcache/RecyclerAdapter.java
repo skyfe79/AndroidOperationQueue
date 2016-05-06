@@ -56,19 +56,14 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
     public void onBindViewHolder(final ViewHolder holder, int position) {
         final  CardItem item = items.get(position);
 
-        /**
-         * It's not a good idea to use multiple operation in cell binding scope.
-         */
-
         downloadQueue.stop();
 
         downloadQueue.addOperation(new Operation() {
             @Override
-            public void run() {
-
+            public void run(AndroidOperationQueue queue, Bundle bundle) {
                 String url = item.getImageURL();
-
-                AndroidOperation.runOnUiThread(new Operation() {
+                bundle.putString("url", url);
+                AndroidOperation.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         holder.image.setImageBitmap(null);
@@ -76,12 +71,22 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                         holder.progressBar.setVisibility(View.VISIBLE);
                     }
                 });
+            }
+        });
+
+        downloadQueue.addOperation(new Operation() {
+            @Override
+            public void run(AndroidOperationQueue queue, Bundle bundle) {
+                String url = bundle.getString("url");
+                if(url == null) {
+                    queue.stop();
+                }
 
                 // check the url if there is the url in the memory cache
                 if(Cache.sharedInstance().hasURLInMemoryCache(url) == true) {
                     final Bitmap bitmap = Cache.sharedInstance().getBitmapFromMemoryCache(url);
                     if(bitmap != null) {
-                        AndroidOperation.runOnUiThread(new Operation() {
+                        AndroidOperation.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 holder.image.setImageBitmap(bitmap);
@@ -89,10 +94,20 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                                 holder.progressBar.setVisibility(View.INVISIBLE);
                             }
                         });
-                        return;
+                        queue.stop();
                     }
                 }
+            }
+        });
 
+        downloadQueue.addOperation(new Operation() {
+            @Override
+            public void run(AndroidOperationQueue queue, Bundle bundle) {
+
+                String url = bundle.getString("url");
+                if(url == null) {
+                    queue.stop();
+                }
 
                 //check the url if there is the url in the file cache
                 if(Cache.sharedInstance().hasURLInFileCache(url) == true) {
@@ -101,7 +116,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
                     if(bitmap != null) {
                         Cache.sharedInstance().putBitmapInMemoryCache(url, bitmap);
-                        AndroidOperation.runOnUiThread(new Operation() {
+                        AndroidOperation.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 holder.image.setImageBitmap(bitmap);
@@ -110,15 +125,27 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
                             }
                         });
-                        return;
+                        queue.stop();
                     }
                 }
+            }
+        });
+
+        downloadQueue.addOperation(new Operation() {
+            @Override
+            public void run(AndroidOperationQueue queue, Bundle bundle) {
+
+                String url = bundle.getString("url");
+                if(url == null) {
+                    queue.stop();
+                }
+
 
                 // there is no bitmap on memory or file then download bitmap from url.
                 final Bitmap bitmap = downloadBitmapFromURL(url);
                 if(bitmap != null) {
                     Cache.sharedInstance().putBitmapInMemoryCache(url, bitmap);
-                    AndroidOperation.runOnUiThread(new Operation() {
+                    AndroidOperation.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             holder.image.setImageBitmap(bitmap);

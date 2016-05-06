@@ -6,7 +6,7 @@ AndroidOperationQueue is tiny serial operation queue for Android Development.
 ```groovy
 dependencies {
 	...
-	compile 'kr.pe.burt.android.lib:androidoperationqueue:0.0.1'
+	compile 'kr.pe.burt.android.lib:androidoperationqueue:0.0.2'
 }
 ```
 
@@ -17,7 +17,6 @@ You can see the examples using AndroidOperationQueue at [https://github.com/skyf
  * [Simple example](https://github.com/skyfe79/AndroidOperationQueue/tree/master/examples/DownloadImage)
  * [Image Download with cache](https://github.com/skyfe79/AndroidOperationQueue/tree/master/examples/ImageDownloadWithCache)
  * [Image Download without cache](https://github.com/skyfe79/AndroidOperationQueue/tree/master/examples/MultipleImageDownload) 
- * 
 
 ## Image Download without cache
 ![](examples/art/image_download_without_cache.gif)
@@ -40,7 +39,7 @@ You can add operation by using below methods.
 AndroidOperationQueue queue = new AndroidOperationQueue("JobQueue");
 queue.addOperation(new Operation() {
 	@Override
-	public void run() {
+	public void run(AndroidOperationQueue q, Bundle bundle) {
 		
 		// doing job #1
 	
@@ -49,7 +48,7 @@ queue.addOperation(new Operation() {
 
 queue.addOperation(new Operation() {
 	@Override
-	public void run() {
+	public void run(AndroidOperationQueue q, Bundle bundle) {
 		
 		// doing job #2
 	
@@ -69,7 +68,7 @@ You can remove operation by using below methods.
 ```java
 Operation operation = new Operation() {
 	@Override
-	public void run() {
+	public void run(AndroidOperationQueue q, Bundle bundle) {
 		
 		// doing job #n
 	
@@ -120,31 +119,27 @@ You can share data by using Bundle which is in AndroidOperationQueue. If you wan
 ```java
 queue.addOperation(new Operation() {
     @Override
-    public void run() {
-        Bundle bundle = queue.getBundle();
+    public void run(AndroidOperationQueue q, Bundle bundle) {
         bundle.putInt("sum", 1);
     }
 });
 queue.addOperation(new Operation() {
     @Override
-    public void run() {
-        Bundle bundle = queue.getBundle();
+    public void run(AndroidOperationQueue q, Bundle bundle) {
         int sum = bundle.getInt("sum");
         bundle.putInt("sum", sum + 2);
     }
 });
 queue.addOperation(new Operation() {
     @Override
-    public void run() {
-        Bundle bundle = queue.getBundle();
+    public void run(AndroidOperationQueue q, Bundle bundle) {
         int sum = bundle.getInt("sum");
         bundle.putInt("sum", sum + 3);
     }
 });
 queue.addOperation(new Operation() {
     @Override
-    public void run() {
-        Bundle bundle = queue.getBundle();
+    public void run(AndroidOperationQueue q, Bundle bundle) {
         int sum = bundle.getInt("sum");
         Log.v("SUM", String.format("1+2+3 = %d", sum));
     }
@@ -157,6 +152,121 @@ Output is
 V/SUM: 1+2+3 = 6
 ```
 
+### Example for downloading images with cache
+
+```java
+AndroidOperationQueue downloadQueue = new AndroidOperationQueue("DownloadQueue");
+
+downloadQueue.stop();
+
+downloadQueue.addOperation(new Operation() {
+    @Override
+    public void run(AndroidOperationQueue queue, Bundle bundle) {
+        String url = item.getImageURL();
+        bundle.putString("url", url);
+        AndroidOperation.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                holder.image.setImageBitmap(null);
+                holder.line.setVisibility(View.INVISIBLE);
+                holder.progressBar.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+});
+
+downloadQueue.addOperation(new Operation() {
+    @Override
+    public void run(AndroidOperationQueue queue, Bundle bundle) {
+        String url = bundle.getString("url");
+        if(url == null) {
+            queue.stop();
+        }
+
+        // check the url if there is the url in the memory cache
+        if(Cache.sharedInstance().hasURLInMemoryCache(url) == true) {
+            final Bitmap bitmap = Cache.sharedInstance().getBitmapFromMemoryCache(url);
+            if(bitmap != null) {
+                AndroidOperation.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        holder.image.setImageBitmap(bitmap);
+                        holder.line.setVisibility(View.VISIBLE);
+                        holder.progressBar.setVisibility(View.INVISIBLE);
+                    }
+                });
+                queue.stop();
+            }
+        }
+    }
+});
+
+downloadQueue.addOperation(new Operation() {
+    @Override
+    public void run(AndroidOperationQueue queue, Bundle bundle) {
+
+        String url = bundle.getString("url");
+        if(url == null) {
+            queue.stop();
+        }
+
+        //check the url if there is the url in the file cache
+        if(Cache.sharedInstance().hasURLInFileCache(url) == true) {
+            final String path = Cache.sharedInstance().getFilePathFromFileCache(url);
+            final Bitmap bitmap = BitmapFactory.decodeFile(path);
+
+            if(bitmap != null) {
+                Cache.sharedInstance().putBitmapInMemoryCache(url, bitmap);
+                AndroidOperation.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        holder.image.setImageBitmap(bitmap);
+                        holder.line.setVisibility(View.VISIBLE);
+                        holder.progressBar.setVisibility(View.INVISIBLE);
+
+                    }
+                });
+                queue.stop();
+            }
+        }
+    }
+});
+
+downloadQueue.addOperation(new Operation() {
+    @Override
+    public void run(AndroidOperationQueue queue, Bundle bundle) {
+
+        String url = bundle.getString("url");
+        if(url == null) {
+            queue.stop();
+        }
+
+
+        // there is no bitmap on memory or file then download bitmap from url.
+        final Bitmap bitmap = downloadBitmapFromURL(url);
+        if(bitmap != null) {
+            Cache.sharedInstance().putBitmapInMemoryCache(url, bitmap);
+            AndroidOperation.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    holder.image.setImageBitmap(bitmap);
+                    holder.line.setVisibility(View.VISIBLE);
+                    holder.progressBar.setVisibility(View.INVISIBLE);
+                }
+            });
+
+            String path = FileUtils.generateTempFileAtExternalStorage("ImageDownloadWithCache", "temp_", ".jpeg");
+            boolean success = saveBitmapToPath(bitmap, path);
+            if(success) {
+                Cache.sharedInstance().putPathInFileCache(url, path);
+            }
+        }
+    }
+});
+
+downloadQueue.start();
+```
+
 ### Operation Utils
 
 #### runOnUiThread
@@ -166,11 +276,11 @@ If you want to update ui element after some background work, you should do it on
 ```java
 queue.addOperation(new Operation() {
     @Override
-    public void run() {
+    public void run(AndroidOperationQueue q, Bundle bundle) {
     
     	 // doing background work
     	
-        AndroidOperation.runOnUiThread(new Operation() {
+        AndroidOperation.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 textView.setText("It's completed");
@@ -187,11 +297,11 @@ You can also use main thread after some time like below.
 ```java
 queue.addOperation(new Operation() {
     @Override
-    public void run() {
+    public void run(AndroidOperationQueue q, Bundle bundle) {
     
     	 // doing background work
     	
-        AndroidOperation.runOnUiThreadAfterDelay(new Operation() {
+        AndroidOperation.runOnUiThreadAfterDelay(new Runnable() {
             @Override
             public void run() {
                 textView.setText("It's completed");
@@ -208,11 +318,11 @@ You can sleep current opertation thread for some time like below.
 ```java
 queue.addOperation(new Operation() {
     @Override
-    public void run() {
+    public void run(AndroidOperationQueue q, Bundle bundle) {
     
     	 // doing background work
     	
-        AndroidOperation.runOnUiThreadAfterDelay(new Operation() {
+        AndroidOperation.runOnUiThreadAfterDelay(new Runnable() {
             @Override
             public void run() {
                 textView.setText("It's completed");

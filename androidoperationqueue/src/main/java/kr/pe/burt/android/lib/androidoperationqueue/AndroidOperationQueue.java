@@ -3,10 +3,14 @@ package kr.pe.burt.android.lib.androidoperationqueue;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.Process;
 
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Created by burt on 2016. 5. 1..
@@ -19,6 +23,7 @@ public class AndroidOperationQueue {
     private boolean         isRunning = false;
     private String          name = null;
     private int             priority = Process.THREAD_PRIORITY_DEFAULT;
+
     /**
      * Construct AndroidOperationQueue with name and default thread priority as Process.THREAD_PRIORITY_DEFAULT
      * @param name AndroidOperationQueue's name
@@ -74,6 +79,7 @@ public class AndroidOperationQueue {
         operationHandlerThread.quit();
         operationHandlerThread = null;
         operationHandlerThreadHandler = null;
+        bundle.clear();
     }
 
     /**
@@ -85,9 +91,9 @@ public class AndroidOperationQueue {
         if(isRunning) {
             if(operationHandlerThreadHandler == null)
                 return false;
-            return operationHandlerThreadHandler.post(operation);
+            return operationHandlerThreadHandler.post(new AndroidOperation(this, operation));
         } else {
-            return operationQueue.add(new AndroidOperation(operation));
+            return operationQueue.add(new AndroidOperation(this, operation));
         }
     }
 
@@ -101,9 +107,9 @@ public class AndroidOperationQueue {
             if(operationHandlerThreadHandler == null)
                 return false;
 
-            return operationHandlerThreadHandler.postAtFrontOfQueue(operation);
+            return operationHandlerThreadHandler.postAtFrontOfQueue(new AndroidOperation(this, operation));
         } else {
-            return operationQueue.add(new AndroidOperation(operation, AndroidOperation.Type.ATFIRST, null, 0));
+            return operationQueue.add(new AndroidOperation(this, operation, AndroidOperation.Type.ATFIRST, null, 0));
         }
     }
 
@@ -117,9 +123,9 @@ public class AndroidOperationQueue {
             if(operationHandlerThreadHandler == null)
                 return false;
 
-            return operationHandlerThreadHandler.postAtTime(operation, uptimeMillis);
+            return operationHandlerThreadHandler.postAtTime(new AndroidOperation(this, operation), uptimeMillis);
         } else {
-            return operationQueue.add(new AndroidOperation(operation, AndroidOperation.Type.ATTIME, null, uptimeMillis));
+            return operationQueue.add(new AndroidOperation(this, operation, AndroidOperation.Type.ATTIME, null, uptimeMillis));
         }
     }
 
@@ -133,9 +139,9 @@ public class AndroidOperationQueue {
             if(operationHandlerThreadHandler == null)
                 return false;
 
-            return operationHandlerThreadHandler.postAtTime(operation, token, uptimeMillis);
+            return operationHandlerThreadHandler.postAtTime(new AndroidOperation(this, operation), token, uptimeMillis);
         } else {
-            return operationQueue.add(new AndroidOperation(operation, AndroidOperation.Type.ATTIME_WITH_TOKEN, token, uptimeMillis));
+            return operationQueue.add(new AndroidOperation(this, operation, AndroidOperation.Type.ATTIME_WITH_TOKEN, token, uptimeMillis));
         }
     }
 
@@ -150,9 +156,9 @@ public class AndroidOperationQueue {
             if(operationHandlerThreadHandler == null)
                 return false;
 
-            return operationHandlerThreadHandler.postDelayed(operation, delayTimeMillis);
+            return operationHandlerThreadHandler.postDelayed(new AndroidOperation(this, operation), delayTimeMillis);
         } else {
-            return operationQueue.add(new AndroidOperation(operation, AndroidOperation.Type.DELAY, null, delayTimeMillis));
+            return operationQueue.add(new AndroidOperation(this, operation, AndroidOperation.Type.DELAY, null, delayTimeMillis));
         }
     }
 
@@ -164,9 +170,9 @@ public class AndroidOperationQueue {
         if(isRunning) {
             if(operationHandlerThreadHandler == null)
                 return ;
-            operationHandlerThreadHandler.removeCallbacks(operation);
+            operationHandlerThreadHandler.removeCallbacks(new AndroidOperation(this, operation));
         } else {
-            operationQueue.remove(new AndroidOperation(operation));
+            operationQueue.remove(new AndroidOperation(this, operation));
         }
     }
 
@@ -179,9 +185,9 @@ public class AndroidOperationQueue {
         if(isRunning) {
             if(operationHandlerThreadHandler == null)
                 return;
-            operationHandlerThreadHandler.removeCallbacks(operation, token);
+            operationHandlerThreadHandler.removeCallbacks(new AndroidOperation(this, operation), token);
         } else {
-            operationQueue.remove(new AndroidOperation(operation, AndroidOperation.Type.NORMAL, token, 0));
+            operationQueue.remove(new AndroidOperation(this, operation, AndroidOperation.Type.NORMAL, token, 0));
         }
     }
 
@@ -195,7 +201,11 @@ public class AndroidOperationQueue {
         operationQueue.clear();
     }
 
+    /**
+     * Return bundle
+     */
     public Bundle getBundle() {
         return bundle;
     }
+
 }

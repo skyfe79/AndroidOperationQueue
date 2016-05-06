@@ -25,5 +25,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.android.support:recyclerview-v7:23.3.0'
     compile 'com.android.support:cardview-v7:23.3.0'
-    compile 'kr.pe.burt.android.lib:androidoperationqueue:0.0.1'
+    compile 'kr.pe.burt.android.lib:androidoperationqueue:0.0.2'
 }
