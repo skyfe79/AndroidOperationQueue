@@ -14,7 +14,7 @@ publish {
     userOrg = 'skyfe79'
     groupId = 'kr.pe.burt.android.lib'
     artifactId = 'androidoperationqueue'
-    publishVersion = '0.0.1'
+    publishVersion = '0.0.2'
     desc = 'AndroidOperationQueue is tiny serial operation queue for Android Development.'
     website = 'https://github.com/skyfe79/AndroidOperationQueue'
 }
@@ -26,8 +26,8 @@ android {
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "0.0.2"
     }
     buildTypes {
         release {

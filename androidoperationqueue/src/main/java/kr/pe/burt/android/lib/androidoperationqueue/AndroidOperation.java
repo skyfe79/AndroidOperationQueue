@@ -2,9 +2,12 @@ package kr.pe.burt.android.lib.androidoperationqueue;
 
 
 import android.graphics.Path;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+
+import java.lang.ref.WeakReference;
 
 /**
  * Created by burt on 2016. 5. 1..
@@ -15,16 +18,16 @@ public class AndroidOperation extends Thread {
     // Thread Helper Functions
     private static final Handler handler = new Handler(Looper.getMainLooper());
 
-    public static void runOnUiThread(Operation operation) {
-        handler.post(operation);
+    public static void runOnUiThread(Runnable runnable) {
+        handler.post(runnable);
     }
 
-    public static void runOnUiThreadAfterDelay(Operation operation, long delayTimeMillis) {
-        handler.postDelayed(operation, delayTimeMillis);
+    public static void runOnUiThreadAfterDelay(Runnable runnable, long delayTimeMillis) {
+        handler.postDelayed(runnable, delayTimeMillis);
     }
 
-    public static void removeOperationOnUiThread(Operation operation) {
-        handler.removeCallbacks(operation);
+    public static void removeOperationOnUiThread(Runnable runnable) {
+        handler.removeCallbacks(runnable);
     }
 
     public static void sleep(long sleepTimeMillis) {
@@ -44,13 +47,15 @@ public class AndroidOperation extends Thread {
     private Type type = Type.NORMAL;
     private Object token = null;
     private long time = 0;
+    private WeakReference<AndroidOperationQueue> owner;
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // AndroidOperation
-    protected AndroidOperation(Operation operation) {
-        this(operation, Type.NORMAL, null, 0);
+    protected AndroidOperation(AndroidOperationQueue queue, Operation operation) {
+        this(queue, operation, Type.NORMAL, null, 0);
     }
 
-    protected AndroidOperation(Operation operation, Type type, Object token, long time) {
+    protected AndroidOperation(AndroidOperationQueue queue, Operation operation, Type type, Object token, long time) {
+        this.owner = new WeakReference<AndroidOperationQueue>(queue);
         this.operation = operation;
         this.type = type;
         this.token = token;
@@ -76,22 +81,32 @@ public class AndroidOperation extends Thread {
         return result;
     }
 
+    @Override
+    public void run() {
+
+        AndroidOperationQueue queue = owner.get();
+        if(queue != null && queue.isActivated()) {
+            operation.run(queue, queue.getBundle());
+        }
+
+    }
+
     protected void queueing(Handler handler) {
         switch (type) {
             case NORMAL:
-                handler.post(operation);
+                handler.post(this);
                 break;
             case ATFIRST:
-                handler.postAtFrontOfQueue(operation);
+                handler.postAtFrontOfQueue(this);
                 break;
             case ATTIME:
-                handler.postAtTime(operation, time);
+                handler.postAtTime(this, time);
                 break;
             case ATTIME_WITH_TOKEN:
-                handler.postAtTime(operation, token, time);
+                handler.postAtTime(this, token, time);
                 break;
             case DELAY:
-                handler.postDelayed(operation, time);
+                handler.postDelayed(this, time);
         }
     }
 }

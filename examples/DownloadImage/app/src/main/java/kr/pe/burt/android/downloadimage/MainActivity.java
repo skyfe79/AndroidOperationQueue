@@ -42,8 +42,8 @@ public class MainActivity extends AppCompatActivity {
 
         queue.addOperation(new Operation() {
             @Override
-            public void run() {
-                AndroidOperation.runOnUiThread(new Operation() {
+            public void run(AndroidOperationQueue queue, Bundle bundle) {
+                AndroidOperation.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         progressBar.setVisibility(View.VISIBLE);
@@ -54,24 +54,24 @@ public class MainActivity extends AppCompatActivity {
 
         queue.addOperation(new Operation() {
             @Override
-            public void run() {
-                Bundle bundle = queue.getBundle();
-                bundle.putString("url", "https://www.google.co.kr/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png");
+            public void run(AndroidOperationQueue queue, Bundle bundle) {
+                bundle.putString("url", "https://raw.githubusercontent.com/skyfe79/AndroidOperationQueue/master/examples/art/marvel01.jpeg");
             }
         });
 
         queue.addOperation(new Operation() {
             @Override
-            public void run() {
+            public void run(AndroidOperationQueue queue, Bundle bundle) {
 
-                Bundle bundle = queue.getBundle();
                 String url = bundle.getString("url", null);
-                if(url == null) return ;
+                if(url == null) {
+                    queue.stop();
+                }
 
                 final Bitmap bitmap = downloadBitmap(url);
 
                 if(bitmap != null) {
-                    AndroidOperation.runOnUiThread(new Operation() {
+                    AndroidOperation.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             imageView.setImageBitmap(bitmap);
@@ -82,9 +82,9 @@ public class MainActivity extends AppCompatActivity {
         });
         queue.addOperation(new Operation() {
             @Override
-            public void run() {
+            public void run(AndroidOperationQueue queue, Bundle bundle) {
                 AndroidOperation.sleep(1000);
-                AndroidOperation.runOnUiThread(new Operation() {
+                AndroidOperation.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         progressBar.setVisibility(View.GONE);
