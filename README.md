@@ -1,3 +1,5 @@
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-AndroidOperationQueue-green.svg?style=true)](https://android-arsenal.com/details/1/3552)
+
 # AndroidOperationQueue
 AndroidOperationQueue is tiny serial operation queue for Android Development. 
 
